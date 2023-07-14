@@ -1,57 +1,70 @@
-#include <iostream>
+module Division (
+    input wire [31:0] dividend,
+    input wire [31:0] divisor,
+    output reg [31:0] quotient,
+    output reg [31:0] remainder
+);
 
-// Slow Division Algorithm
-void slowDivision(int dividend, int divisor, int &quotient, int &remainder)
-{
-    quotient = 0;
-    remainder = dividend;
-    while (remainder >= divisor)
-    {
-        remainder -= divisor;
-        quotient++;
-    }
-}
+    always @(dividend, divisor) begin
+        quotient = 0;
+        remainder = dividend;
 
-// Fast Division Algorithm
-void fastDivision(int dividend, int divisor, int &quotient, int &remainder)
-{
-    quotient = 0;
-    remainder = dividend;
-    int bitPosition = 1;
+        // Slow Division Algorithm
+        while (remainder >= divisor) begin
+            remainder = remainder - divisor;
+            quotient = quotient + 1;
+        end
 
-    while (divisor <= remainder)
-    {
-        divisor <<= 1;
-        bitPosition <<= 1;
-    }
+        // Fast Division Algorithm
+        reg [31:0] bitPosition = 1;
+        reg [31:0] tempDivisor = divisor;
 
-    while (bitPosition > 1)
-    {
-        divisor >>= 1;
-        bitPosition >>= 1;
+        while (tempDivisor <= remainder) begin
+            tempDivisor = tempDivisor << 1;
+            bitPosition = bitPosition << 1;
+        end
 
-        if (remainder >= divisor)
-        {
-            remainder -= divisor;
-            quotient += bitPosition;
-        }
-    }
-}
+        while (bitPosition > 1) begin
+            tempDivisor = tempDivisor >> 1;
+            bitPosition = bitPosition >> 1;
 
-int main()
-{
-    int dividend = 10;
-    int divisor = 3;
-    int quotient, remainder;
+            if (remainder >= tempDivisor) begin
+                remainder = remainder - tempDivisor;
+                quotient = quotient + bitPosition;
+            end
+        end
+    end
 
-    slowDivision(dividend, divisor, quotient, remainder);
-    std::cout << "Slow Division:\n";
-    std::cout << "Quotient: " << quotient << "\n";
-    std::cout << "Remainder: " << remainder << "\n";
-    fastDivision(dividend, divisor, quotient, remainder);
-    std::cout << "Fast Division:\n";
-    std::cout << "Quotient: " << quotient << "\n";
-    std::cout << "Remainder: " << remainder << "\n";
+endmodule
 
-    return 0;
-}
+module DivisionTestbench;
+    reg [31:0] dividend = 10;
+    reg [31:0] divisor = 3;
+    reg [31:0] quotient;
+    reg [31:0] remainder;
+
+    // Instantiate the Division module
+    Division uut (
+        .dividend(dividend),
+        .divisor(divisor),
+        .quotient(quotient),
+        .remainder(remainder)
+    );
+
+    initial begin
+        // Slow Division
+        #10;
+        $display("Slow Division:");
+        $display("Quotient: %d", quotient);
+        $display("Remainder: %d", remainder);
+
+        // Fast Division
+        #10;
+        $display("Fast Division:");
+        $display("Quotient: %d", quotient);
+        $display("Remainder: %d", remainder);
+
+        $finish;
+    end
+
+endmodule
